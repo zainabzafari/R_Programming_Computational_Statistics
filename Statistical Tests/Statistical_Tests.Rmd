@@ -1,0 +1,109 @@
+---
+Problem 12 - Multiple Testing
+You are now an expert on conducting hypothesis tests! This new achievement
+has also led you to become more fascinated with the consumption and the
+science behind beer. After leaving Berghain, you remember the example Professor Renard mentioned in class. The idea of saving Guinness time and money
+has suddenly consumed you. What if you could save Guinness time and money
+by recommending them to use the Mann-Whitney test instead of wasting time
+checking for t-test assumptions? Time is money, so let’s design an experiment
+with many tests to explore the implications on false positives (type I error) and
+false negative (type II error) test results. Let’s assume that most of Guiness’
+data is indeed normally distributed. Is the Mann-Whitney test as good as the
+t-test for finding true differences? Hint: In R, the following commands might
+become useful rnorm, sample, replicate.
+Experimental Design:
+• set α = 0.05
+• simulate three populations, each with n = 1000 observations. Use µ1 =
+µ2 = 2, µ3 = 4 and σ1 = σ2 = σ3 = 1
+• generate 4 different samples (see below) from the above described populations and sample 5 observations from each population 1000 times
+• sample 1: draw 5 samples, 1000 times from N (µ1, σ1)
+• sample 2: draw 5 samples, 1000 times from N (µ2, σ2)
+• sample 3: draw 5 samples, 1000 times from N (µ3, σ3)
+• sample 4: draw 5 samples, 500 times from N (µ2, σ2) and 5 samples, 500
+times from N (µ3, σ3)
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+```{r}
+library ( dplyr )
+library ( ggplot2 )
+# Experimental Design
+alpha <- 0.05
+n_samples <- 1000
+mu1 <- mu2 <- 2
+mu3 <- 4
+sigma <- 1
+set.seed (42)
+pop1 <- rnorm (1000 , mu1 , sigma )
+pop2 <- rnorm (1000 , mu2 , sigma )
+pop3 <- rnorm (1000 , mu3 , sigma )
+sample1 <- replicate ( n = n_samples , sample ( pop1 , size =5))
+sample2 <- replicate ( n = n_samples , sample ( pop2 , size =5))
+sample3 <- replicate ( n = n_samples , sample ( pop3 , size =5))
+sample4 <- cbind (
+  replicate ( n = n_samples /2 , sample ( pop2 , size =5)) ,
+  replicate ( n = n_samples /2 , sample ( pop3 , size =5)))
+
+
+```
+
+---
+ A) Compute two-sided t-tests and Mann-Whitney tests for the scenarios:
+no difference (sample1, sample2), difference (sample1, sample3), mixed
+(sample1, sample4) and store the p-values. Compare the number of significant test results and discuss your findings.
+ 
+---
+```{r}
+
+#t-Test
+t_nodiff <- sapply(1:ncol(sample1), function(x) t.test(sample1[, x], sample2[, x])$p.value)
+t_diff <- sapply(1:ncol(sample1), function(x) t.test(sample1[, x], sample3[, x])$p.value)
+t_mixed <- sapply(1:ncol(sample1), function(x) t.test(sample1[, x], sample4[, x])$p.value)
+
+
+#Mann-Witney TEST
+mw_nodiff <- sapply(1:ncol(sample1), function(x) wilcox.test(sample1[, x], sample2[, x])$p.value)
+mw_diff <- sapply(1:ncol(sample1), function(x) wilcox.test(sample1[, x], sample3[, x])$p.value)
+mw_mixed <- sapply(1:ncol(sample1), function(x) wilcox.test(sample1[, x], sample4[, x])$p.value)
+
+
+# compare number of significant test results
+# one dataframe
+results <- data.frame(p.value=cbind(c( t_nodiff, t_diff, t_mixed,
+                                      mw_nodiff, mw_diff, mw_mixed))) 
+
+results$test <- c(rep("t-test", n_samples), 
+                  rep("t-test", n_samples), 
+                  rep("t-test", n_samples), 
+                  rep("wilcoxon", n_samples), 
+                  rep("wilcoxon", n_samples), 
+                  rep("wilcoxon", n_samples))
+
+results$scenario <- c(rep("nodiff", n_samples), 
+                      rep("diff", n_samples), 
+                      rep("mix", n_samples), 
+                      rep("nodiff", n_samples), 
+                      rep("diff", n_samples), 
+                      rep("mix", n_samples))
+
+
+results_summary <- results %>% 
+  group_by(test, scenario) %>% 
+  summarize(n_test = n(), 
+            significant = sum(p.value <= alpha))
+
+print(results_summary)
+
+
+
+
+```
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.

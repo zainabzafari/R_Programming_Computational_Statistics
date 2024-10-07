@@ -1,5 +1,8 @@
+
 #Kernel Density Estimation
-credit_scores <-read.csv("D:\\data\\ex01_credit_scores.csv", sep = ";")
+
+
+credit_scores <-read.csv("D:\\R.Programming\\data\\ex01_credit_scores.csv", sep = ";")
 str(credit_scores)
 head(credit_scores)
 
