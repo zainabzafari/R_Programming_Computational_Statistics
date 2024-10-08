@@ -1,4 +1,5 @@
-#Statistical Tests
+
+  
 
 library ( dplyr )
 library ( ggplot2 )
@@ -18,3 +19,4 @@ sample3 <- replicate ( n = n_samples , sample ( pop3 , size =5))
 sample4 <- cbind (
   replicate ( n = n_samples /2 , sample ( pop2 , size =5)) ,
   replicate ( n = n_samples /2 , sample ( pop3 , size =5)))
+

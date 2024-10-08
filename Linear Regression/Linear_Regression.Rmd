@@ -1,0 +1,99 @@
+---
+title: "Linear Regression"
+arren Wuffett is seeking new investment opportunities. He collected some data from start-ups and wants to know how their business strategies (spendings
+in marketing, administration, and research and development) influence their
+profit. Help him find a model to predict profit by using a simple linear regression and the mentioned variables. Hint: in R use the commands lm, predict,
+cor.
+---
+
+---
+A Download and parse the corresponding data set ex03 startups.csv from
+Moodle. Explore the pairwise correlations in the data and build 4 linear
+models in which you use the variables Marketing.Spend, Administration,
+R.D.Spend or all of them to predict profit
+---
+
+
+```{r}
+startups_data <- read.csv("D:\\data\\Computational statistics\\startups.csv", sep = ",")
+head(startups_data)
+startups_data <- subset(startups_data, select = -c(State))
+cor(startups_data)
+
+pairs(startups_data)
+
+
+lm_R.D.Spend <- lm(Profit~R.D.Spend, data = startups_data)
+lm_Administration <- lm(Profit~Administration, data = startups_data)
+lm_Marketing.Spend <- lm(Profit~Marketing.Spend, data = startups_data)
+lm_all <- lm(Profit~., data = startups_data)
+```
+
+
+---
+B) Examine your prediction results visually and by computing the correlation coefficients between the predicted and observed data. Which model
+performs best?1 Based on the best model, what is the increase in profit
+when you increase the investments in R.D. by $100?
+---
+
+```{r}
+#Examine by visualization
+
+library ( ggplot2 )
+require ( gridExtra )
+
+p1 <- ggplot(startups_data, aes(x=predict(lm_R.D.Spend, startups_data), y=Profit))+
+  geom_point()+geom_smooth(method = lm, se=FALSE)+
+  xlab("R.D.Spend") + ylab("Profit") +ggtitle("lm of R.D.Spend")
+
+p2 <- ggplot(startups_data, aes(x=predict(lm_Administration, startups_data), y=Profit))+
+  geom_point()+geom_smooth(method = lm, se=FALSE)+
+  xlab("Administration") + ylab("Profit") +ggtitle("lm of Administration")
+
+p3 <- ggplot(startups_data, aes(x=predict(lm_Marketing.Spend, startups_data), y=Profit))+
+  geom_point()+geom_smooth(method = lm, se=FALSE)+
+  xlab("Marketing.Spend") + ylab("Profit") +ggtitle("lm of Marketing Spend")
+
+p4 <- ggplot(startups_data, aes(x=predict(lm_all, startups_data), y=Profit))+
+  geom_point()+geom_smooth(method = lm, se=FALSE)+
+  xlab("ALL") + ylab("Profit") +ggtitle("lm of All Variables")
+
+grid.arrange(p1, p2, p3, p4, ncol=2)
+
+
+```
+---
+based on the linear regression model R.D.Spend is highly correleted with profit, so we can invest more on R.D.Spend
+
+---
+```{r}
+#predicting correlation with correlation coefficient
+
+predictions <- data.frame("profit" = startups_data$Profit,
+                          "rd_pred" = predict(lm_R.D.Spend, startups_data),
+                          "Administration" = predict(lm_Administration, startups_data),
+                          "Marketing Spend" = predict(lm_Marketing.Spend, startups_data),
+                          "ALL" = predict(lm_all, startups_data))
+
+cor(predictions)
+```
+
+---
+The model based on all explanatory variables performs best, although it gives
+only a minor improvement over the prediction results based on the R.D. Spend.
+Based on this information we can now increase the investment in R.D. by $100
+for this model.
+---
+```{r}
+lm_all$coefficients["R.D.Spend"]*100
+```
+---
+by spending 100 dollars on R.D.Spend, we expect 80 dollar profit in overall.
+---
+
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
