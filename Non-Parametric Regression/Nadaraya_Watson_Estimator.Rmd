@@ -44,7 +44,155 @@ B) Run a Nadaraya-Watson estimate with a gaussian kernel function (Recommended R
 ---
 ```{r}
 
+
+# Nadaraya-Watson with Gaussian kernel: ksmooth function
+nw1 <- ksmooth(ehec$week, ehec$no_infections, kernel = "normal", bandwidth = 1)
+nw2 <- ksmooth(ehec$week, ehec$no_infections, kernel = "normal", bandwidth = 2)
+nw3 <- ksmooth(ehec$week, ehec$no_infections, kernel = "normal", bandwidth = 5)
+nw4 <- ksmooth(ehec$week, ehec$no_infections, kernel = "normal", bandwidth = 10)
+
+# Convert the ksmooth results to data frames
+df_nw1 <- data.frame(week = nw1$x, no_infections = nw1$y)
+df_nw2 <- data.frame(week = nw2$x, no_infections = nw2$y)
+df_nw3 <- data.frame(week = nw3$x, no_infections = nw3$y)
+df_nw4 <- data.frame(week = nw4$x, no_infections = nw4$y)
+
+# Plot original data and the smoothed curves
+ggplot(data = ehec, aes(x = week, y = no_infections)) +
+  geom_point() +  # Original data points
+  geom_abline(colour = "red", intercept = lm_ehec$coefficients[1], slope = lm_ehec$coefficients[2]) +  # Linear regression line
+  geom_line(data = df_nw1, aes(x = week, y = no_infections), colour = "blue", linewidth = 1 ) +  # Smoothing h1
+  geom_line(data = df_nw2, aes(x = week, y = no_infections), colour = "green", linewidth = 1) +  # Smoothing h2
+  geom_line(data = df_nw3, aes(x = week, y = no_infections), colour = "purple", linewidth = 1) +  # Smoothing h3
+  geom_line(data = df_nw4, aes(x = week, y = no_infections), colour = "orange", linewidth = 1) +  # Smoothing h4
+  ggtitle("Nadaraya-Watson Kernel Smoothing with Different Bandwidths") +
+  xlab("Week") + 
+  ylab("Number of Infections") +
+  theme_minimal()
+
+
 ```
+
+```{r}
+#another way of coding
+
+library(ggplot2)
+
+# Nadaraya-Watson with Gaussian kernel: ksmooth function
+bandwidths <- c(1, 2, 5, 10)  # Bandwidths to iterate over
+colors <- c("blue", "green", "purple", "orange")  # Colors for different bandwidths
+
+# Prepare an empty plot with the original data and linear regression line
+p <- ggplot(data = ehec, aes(x = week, y = no_infections)) +
+  geom_point() +  # Original data points
+  geom_abline(colour = "red", intercept = lm_ehec$coefficients[1], slope = lm_ehec$coefficients[2]) +  # Linear regression line
+  ggtitle("Nadaraya-Watson Kernel Smoothing with Different Bandwidths") +
+  xlab("Week") + 
+  ylab("Number of Infections") +
+  theme_minimal()
+
+# Loop over the bandwidths and add the smoothed lines
+for (i in 1:length(bandwidths)) {
+  # Apply ksmooth for the current bandwidth
+  nw <- ksmooth(ehec$week, ehec$no_infections, kernel = "normal", bandwidth = bandwidths[i])
+  
+  # Convert to data frame for plotting
+  df_nw <- data.frame(week = nw$x, no_infections = nw$y)
+  
+  # Add the smoothed line to the plot
+  p <- p + geom_line(data = df_nw, aes(x = week, y = no_infections), 
+                     colour = colors[i], linewidth = 1)
+}
+
+# Display the final plot with all smoothed curves
+print(p)
+
+```
+```{r}
+paste(AIC(lm_ehec) , BIC(lm_ehec))
+
+```
+```{r}
+# Required libraries
+library(ggplot2)
+
+# Define a function to perform LOOCV and compute MSE
+loocv_mse <- function(model_fit_func, data, y_col, x_col) {
+  n <- nrow(data)  # Number of observations
+  errors <- numeric(n)  # Store errors for each iteration
+  
+  for (i in 1:n) {
+    # Exclude the i-th observation (leave-one-out)
+    train_data <- data[-i, ]
+    test_data <- data[i, ]
+    
+    # Fit the model using the training data
+    model <- model_fit_func(train_data, y_col, x_col)
+    
+    # Predict the number of infections for the excluded week
+    pred <- predict(model, newdata = test_data)
+    
+    # Calculate the squared error
+    errors[i] <- (test_data[[y_col]] - pred)^2
+  }
+  
+  # Return the Mean Squared Error (MSE)
+  return(mean(errors))
+}
+
+# Define a function to fit a linear model
+lm_fit_func <- function(data, y_col, x_col) {
+  lm(as.formula(paste(y_col, "~", x_col)), data = data)
+}
+
+# Define a function to perform Nadaraya-Watson smoothing
+nw_predict_func <- function(train_data, test_x, bandwidth) {
+  nw <- ksmooth(train_data$week, train_data$no_infections, kernel = "normal", bandwidth = bandwidth, x.points = test_x)
+  return(nw$y)
+}
+
+# Define a function to perform LOOCV for Nadaraya-Watson
+loocv_nadaraya_watson_mse <- function(data, bandwidth) {
+  n <- nrow(data)  # Number of observations
+  errors <- numeric(n)  # Store errors for each iteration
+  
+  for (i in 1:n) {
+    # Exclude the i-th observation
+    train_data <- data[-i, ]
+    test_data <- data[i, ]
+    
+    # Predict using Nadaraya-Watson for the excluded week
+    pred <- nw_predict_func(train_data, test_data$week, bandwidth)
+    
+    # Calculate the squared error
+    errors[i] <- (test_data$no_infections - pred)^2
+  }
+  
+  # Return the Mean Squared Error (MSE)
+  return(mean(errors))
+}
+
+# Perform LOOCV for the linear model
+mse_lm <- loocv_mse(lm_fit_func, ehec, "no_infections", "week")
+
+# Perform LOOCV for Nadaraya-Watson with different bandwidths
+bandwidths <- c(1, 2, 5, 10)
+mse_nw <- sapply(bandwidths, function(h) loocv_nadaraya_watson_mse(ehec, h))
+
+# Print MSEs for comparison
+cat("MSE for Linear Model:", mse_lm, "\n")
+cat("MSE for Nadaraya-Watson with Bandwidth 1:", mse_nw[1], "\n")
+cat("MSE for Nadaraya-Watson with Bandwidth 2:", mse_nw[2], "\n")
+cat("MSE for Nadaraya-Watson with Bandwidth 5:", mse_nw[3], "\n")
+cat("MSE for Nadaraya-Watson with Bandwidth 10:", mse_nw[4], "\n")
+
+# Determine which estimator performs best by comparing the MSEs
+best_model <- ifelse(min(mse_nw) < mse_lm, "Nadaraya-Watson", "Linear Model")
+cat("Best model based on MSE:", best_model, "\n")
+
+```
+
+
 
 
 Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
