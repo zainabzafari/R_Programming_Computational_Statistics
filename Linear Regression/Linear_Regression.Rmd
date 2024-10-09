@@ -85,10 +85,31 @@ Based on this information we can now increase the investment in R.D. by $100
 for this model.
 ---
 ```{r}
+
 lm_all$coefficients["R.D.Spend"]*100
 ```
 ---
 by spending 100 dollars on R.D.Spend, we expect 80 dollar profit in overall.
+---
+
+```{r}
+
+lm_all$coefficients
+#Regression with Linear Algebra, Coefficients
+#β = (X′X)^−1 *X′Y
+Y<- matrix(startups_data$Profit)
+ones <- matrix(1, ncol = 1, nrow = nrow(startups_data))
+X<- matrix(c(ones, startups_data$R.D.Spend,
+           startups_data$Administration,
+           startups_data$Marketing.Spend), ncol=4, nrow=nrow(startups_data))
+
+beta <- solve(t(X)%*%X) %*% t(X)%*%Y
+beta
+
+
+```
+---
+We get the same result, if we use lm function or we calculate beta or coefficients using linear algebra
 ---
 
 

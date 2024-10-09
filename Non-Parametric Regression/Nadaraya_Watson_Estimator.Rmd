@@ -1,0 +1,54 @@
+---
+title: "Non Parametric Regression"
+
+Analyze the EHEC infection time series with a Nadaraya-Watson estimator
+with a Gaussian kernel and various bandwidths and compare it to a standard
+linear regression model. We aim at predicting the number of infections (second
+column) by the week of the year (first column).
+
+A) Download the data set ex03 ehec.csv from Moodle and import it into R/-
+Python. Make a suitable plot and briefly describe the data. Run a linear
+regression model with an intercept and include it in the plot. Describe
+the quality of the least squares fit.
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+```{r}
+library(ggplot2)
+ehec <- read.csv("D:\\data\\Computational statistics\\ex03_ehec.csv", sep = ";")
+ehec
+colnames(ehec) <- c("week", "no_infections")
+ehec
+lm_ehec <- lm(no_infections ~ week, data = ehec)
+summary(lm_ehec)
+
+
+ggplot(data = ehec, aes(x=week, y=no_infections))+
+  geom_line()+
+  geom_point()+
+  geom_abline(colour="red", intercept = lm_ehec$coefficients[1], slope = lm_ehec$coefficients[2])
+
+```
+---
+The data shows that the number of infection increases by the week, however, after week 33, number of infection decreases. So there is not a linear relationship between data and the linear regression would not be a good fit for this scenario. Therefore, we run Non-parametric regression(Nadaraya-watson estimator)
+---
+
+
+
+---
+B) Run a Nadaraya-Watson estimate with a gaussian kernel function (Recommended R function: ksmooth) with the bandwidths h1 = 1, h2 = 2,h3 = 5, and h4 = 10. Plot the original data and the resulting curves in a single plot and briefly describe the goodness of fit.
+
+---
+```{r}
+
+```
+
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
