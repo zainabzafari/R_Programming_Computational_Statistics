@@ -1,11 +1,6 @@
 ---
 Problem 12 - Multiple Testing
-You are now an expert on conducting hypothesis tests! This new achievement
-has also led you to become more fascinated with the consumption and the
-science behind beer. After leaving Berghain, you remember the example Professor Renard mentioned in class. The idea of saving Guinness time and money
-has suddenly consumed you. What if you could save Guinness time and money
-by recommending them to use the Mann-Whitney test instead of wasting time
-checking for t-test assumptions? Time is money, so let’s design an experiment
+design an experiment
 with many tests to explore the implications on false positives (type I error) and
 false negative (type II error) test results. Let’s assume that most of Guiness’
 data is indeed normally distributed. Is the Mann-Whitney test as good as the

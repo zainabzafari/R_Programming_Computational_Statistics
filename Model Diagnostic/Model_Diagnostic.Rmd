@@ -1,0 +1,118 @@
+---
+title: "Model Diagnostic"
+output: html_notebook
+
+
+Problem 17 - Regression Diagnostics and Transformation
+Your company caught a severe virus that prohibits accurate payments for this
+month because the salary data is now locked. All you have is an incomplete
+table that some intern started which only shows how many years a person has
+worked at the company and the salary they previously received based on their
+gender (gasp!). HR is desperate and asks you to build a model that predicts
+the salary based on seniority (years in the company) and gender.
+
+---
+
+
+```{r}
+
+#Y=β0 + β1⋅years+β2⋅gender
+library(ggplot2)
+
+salary_data <- read.csv("D:\\data\\Computational statistics\\salary.csv", sep = ",")
+
+salary_data$gender <-factor(salary_data$gender, levels = c("m", "f"))
+
+lm_model <- lm(salary ~ years + gender, data = salary_data)
+
+summary(lm_model)
+```
+```{r}
+#plot the linear model of salary based on gender and seniority
+ggplot(data = salary_data, aes(x=years, y=salary, color=gender))+
+  geom_point()+
+  geom_smooth(method = "lm", se=FALSE)+
+  labs(title = "Salary vs Seniority and Gender", x="Seniority/Years", y="Salary")+
+  theme_minimal()
+```
+```{r}
+
+
+# Extract residuals
+salary_data$residuals <- residuals(lm_model)
+
+# Subset data by gender
+male_data <- subset(salary_data, gender == "m")
+female_data <- subset(salary_data, gender == "f")
+
+# Residual Plot for Males
+ggplot(male_data, aes(x = salary, y = residuals)) +
+  geom_point() +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+  labs(title = "Residual Plot for Males", x = "Seniority (Years)", y = "Residuals") +
+  theme_minimal()
+
+# Residual Plot for Females
+ggplot(female_data, aes(x = salary, y = residuals)) +
+  geom_point() +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+  labs(title = "Residual Plot for Females", x = "Seniority (Years)", y = "Residuals") +
+  theme_minimal()
+
+# Q-Q Plot for Males
+qqnorm(male_data$residuals, main = "Q-Q Plot for Males")
+qqline(male_data$residuals, col = "red")
+
+# Q-Q Plot for Females
+qqnorm(female_data$residuals, main = "Q-Q Plot for Females")
+qqline(female_data$residuals, col = "red")
+```
+---
+Based on the diagnostic plots (especially the residual plot), we may find that the relationship between seniority and salary is not linear or that variance increases with salary as year increase. In such cases, we can apply a transformation to the response variable (salary) to stabilize variance and improve the model. 
+As the data grows based on year, it seems that it grows exponentially, thus we would need log-transformation to fit the data to the linear model
+---
+
+```{r}
+#log transformation
+lm_log_salary <- lm(log(salary) ~ gender + years, data = salary_data)
+summary(lm_log_salary)
+```
+```{r}
+lm_log_male <- data.frame(years = male_data$years,
+salary = exp(predict(lm_log_salary , male_data)))
+
+p1 <- ggplot( male_data , aes( x = years , y = salary )) +
+geom_point() +
+geom_smooth ( method =lm ,
+se= FALSE,
+aes ( color =" Linear Model ")) +
+geom_line ( data =lm_log_male ,
+aes( years , salary , color ="Log Model ")) +
+coord_cartesian ( ylim = c(0 , 300000)) +
+guides( color = guide_legend (" Model Type ")) +
+theme ( legend.position = "top") +
+ggtitle(" male salary ")
+p1
+
+
+lm_log_female <- data.frame( years = female_data$years,
+salary = exp( predict(lm_log_salary, female_data )))
+
+p2 <- ggplot( female_data , aes( x = years , y = salary )) +
+geom_point() +
+geom_smooth ( method =lm ,
+se= FALSE,
+aes( color =" Linear Model ")) +
+geom_line( data =lm_log_female ,
+aes( years , salary , color ="Log Model ")) +
+coord_cartesian ( ylim = c(0 , 300000)) +
+guides( color = guide_legend (" Model Type ")) +
+theme ( legend.position = "top") +
+ggtitle(" male salary ")
+p2
+```
+---
+it seems that log transformation fits better to the data than original linear model
+---
+
+
