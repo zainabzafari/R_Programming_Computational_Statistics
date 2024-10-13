@@ -1,0 +1,76 @@
+---
+title: "Ridge Regression"
+
+Ridge Regression:
+With a regression problem, the weight of students should be predicted from
+their height given in both cm(x1) and m(x2). For the sake of convenience we
+regard the following two observations:
+y = (50 100)′ , x1 = (150 200)′ , x2 = (1.5 2)′
+A) Why is it not possible to obtain a ordinary least squares solution for this
+data set? Identify the specific point when the computation fails.
+---
+
+
+
+```{r}
+y <- c(50, 100)
+x1 <- c(150, 200)
+x2 <- c(1.5, 2)
+
+X <- matrix(c(x1, x2), 2, 2)
+X
+solve(t(X)%*%X)%*%t(X)%*%y
+```
+---
+the error(Error in solve.default(t(X) * X) : 
+  Lapack routine dgesv: system is exactly singular: U[2,2] = 0), means that the variables are very highly correlated such that we do not have a full rank matrix and it is not invertable. So we need regularization mainly Ridge-Regression.
+---
+
+
+---
+B) Run a Ridge Regression with a suitable value of λ and give the solution vector βˆ Ridge.
+
+---
+
+```{r}
+# Ridge Regresson for solving ordinary least squares
+
+ridge <- function(lambda){
+  solve(t(X) %*% X + lambda * diag(2))%*%t(X)%*%y
+ 
+}
+
+ 
+  steps <- 10^(-5:5)
+  ridge_result <- sapply(steps, ridge)
+  
+plot(steps , ridge_result[1 ,], col =" blue ",
+ylim = range(c( ridge_result[1 ,], ridge_result[2 ,])))
+lines(steps, ridge_result[1 ,], col=" blue ")
+points(steps ,ridge_result[2 ,] , col ="red ")
+lines(steps ,ridge_result[2 ,], col="red")
+legend("topright", legend =
+         
+         paste (c("coef1", "coef2")),
+       
+       col = c(" blue ", "red ") , pch = 19 , bty = "n")
+    
+```
+```{r}
+beta.ridge1 <- solve(t(X) %*% X + 1*diag(2))%*%t(X)%*%y
+print("beta1")
+beta.ridge1
+
+beta.ridge5 <- solve(t(X) %*% X + 5*diag(2))%*%t(X)%*%y
+print("beta5")
+beta.ridge5
+
+
+beta.ridge2 <- solve(t(X) %*% X + 2*diag(2))%*%t(X)%*%y
+print("beta2")
+beta.ridge2
+
+
+print("lambda = 1 gives better solution.")
+```
+
