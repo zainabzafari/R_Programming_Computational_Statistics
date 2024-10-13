@@ -1,0 +1,106 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+```{r}
+library(datasets) 
+library(ggplot2)
+mtcars <- datasets::mtcars
+mtcars
+
+ggplot(data = mtcars, aes(x=disp, y=hp))+
+  geom_point()+
+  geom_smooth(method = "lm", se=FALSE)
+```
+```{r}
+RANSAC <- function(data, n, m, t) {
+  # Input:
+  # data: Data containing 'displacement' and 'horsepower' columns
+  # n: Number of iterations
+  # m: Minimum consensus set size
+  # t: Maximum distance for a point to be considered an inlier (tolerance)
+  
+  best_model <- NULL
+  best_inliers <- NULL
+  max_inliers <- 0
+  
+  # Loop for 'n' iterations
+  for (i in 1:n) {
+    # Step 1: Randomly select m points to fit a model
+    sample_indices <- sample(1:nrow(data), m)
+    consensus_set <- data[sample_indices, ]
+    
+    # Step 2: Fit a linear model using the m points
+    model <- lm(hp ~ disp, data = consensus_set)
+    
+    # Step 3: Calculate the residuals (errors) for all points in the dataset
+    predictions <- predict(model, data)
+    residuals <- abs(data$hp - predictions)
+    
+    # Step 4: Identify inliers based on the residual threshold 't'
+    inliers <- data[residuals <= t, ]
+    num_inliers <- nrow(inliers)
+    
+    # Step 5: Check if the current model is better than the best so far
+    if (num_inliers > max_inliers) {
+      best_model <- model
+      best_inliers <- inliers
+      max_inliers <- num_inliers
+    }
+  }
+  
+  # Step 6: Return the best model, inliers, and outliers
+  outliers <- data[!rownames(data) %in% rownames(best_inliers), ]
+   return(list(model = best_model, inliers = best_inliers, outliers = outliers))
+}
+```
+
+
+```{r}
+# Calculate the 80th percentile of the residuals from the simple linear fit
+linear_model <- lm(hp ~disp, data = mtcars)
+residuals <- abs(residuals(linear_model))
+t <- quantile(residuals, 0.8)
+
+# Run RANSAC for different values of n, m, and t
+set.seed(123)  # for reproducibility
+results_50 <- RANSAC(mtcars, n = 50, m = 10, t = t)
+results_100 <- RANSAC(mtcars, n = 100, m = 15, t = t)
+results_500 <- RANSAC(mtcars, n = 500, m = 20, t = t)
+
+# Plot the results: original data, inliers, and fitted lines
+par(mfrow = c(1, 3))  # Display multiple plots in one window
+
+# Plot for n = 50
+plot(mtcars$disp, mtcars$hp, main = "RANSAC (n=50)", 
+     xlab = "Displacement", ylab = "Horsepower", col = "gray", pch = 19)
+points(results_50$inliers$disp, results_50$inliers$hp, col = "blue", pch = 19)
+abline(results_50$model, col = "red", lwd = 2)
+
+# Plot for n = 100
+plot(mtcars$disp, mtcars$hp, main = "RANSAC (n=100)", 
+     xlab = "Displacement", ylab = "Horsepower", col = "gray", pch = 19)
+points(results_100$inliers$disp, results_100$inliers$hp, col = "blue", pch = 19)
+abline(results_100$model, col = "red", lwd = 2)
+
+# Plot for n = 500
+plot(mtcars$disp, mtcars$hp, main = "RANSAC (n=500)", 
+     xlab = "Displacement", ylab = "Horsepower", col = "gray", pch = 19)
+points(results_500$inliers$displacement, results_500$inliers$horsepower, col = "blue", pch = 19)
+abline(results_500$model, col = "red", lwd = 2)
+
+
+
+
+```
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
