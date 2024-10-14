@@ -1,0 +1,20 @@
+---
+title: "Logistic Regression"
+output: html_notebook
+---
+
+
+```{r}
+admission <- read.csv("https://stats.idre.ucla.edu/stat/data/binary.csv")
+admission
+
+logRegModel <- glm(admit ~ gre + gpa, family = "binomial", data = admission)
+summary(logRegModel)
+
+```
+```{r}
+new_student <- data.frame(gre=800, gpa=3.00)
+
+predict(logRegModel, newdata = new_student, type = "response")
+```
+
