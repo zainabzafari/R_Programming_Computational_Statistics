@@ -1,0 +1,26 @@
+---
+title: "Decision Tree/ Gini index"
+output: html_notebook
+---
+
+
+```{r}
+install.packages("rpart.plot")
+
+library(rpart)
+library(rpart.plot)
+
+data <- data.frame(
+  label = c(0, 0, 0, 1, 1, 1),
+  x1 = c(12, 8, 13, 2, 9, 10),
+  x2 = c(15, 4, 7, 6, 10, 9))
+
+fit <- rpart(label ~ x1 + x2, data, control = rpart.control(minsplit = 2))
+rpart.plot(fit)
+
+
+```
+
+
+
+
